@@ -1,0 +1,5 @@
+{
+  "name": "RAG Document Auditor",
+  "description": "An application that uses AI to analyze documents for clarity, context, and overall readiness for ingestion into a RAG (Retrieval-Augmented Generation) system. It provides actionable suggestions in an interactive Kanban-style board.",
+  "requestFramePermissions": []
+}
