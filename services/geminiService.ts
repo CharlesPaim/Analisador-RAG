@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { AnalysisResult } from '../types';
 
@@ -41,8 +40,13 @@ const analysisSchema = {
   required: ["clarityDiagnosis", "contextGaps", "suggestedMetadata", "dataSensitivity", "recommendedImprovements", "finalEvaluation"],
 };
 
-const getPrompt = (documentText: string): string => `
+const getPrompt = (documentText: string, keywords: string[]): string => `
 Você agora é um auditor/editor técnico. Recebeu o documento abaixo, que hoje serve como referência para a equipe e também será transformado em fonte de conhecimento para um sistema RAG (indexação vetorial com consulta por IA).
+
+Uma análise preliminar do texto identificou as seguintes palavras-chave principais, baseadas na frequência:
+[${keywords.join(', ')}]
+
+Use esta lista de palavras-chave como inspiração principal para a seção "Metadados sugeridos".
 
 Quero que você faça uma análise completa e retorne o resultado em formato JSON, seguindo estritamente o schema fornecido.
 
@@ -50,7 +54,7 @@ A análise deve conter:
 
 1.  **Diagnóstico de clareza**: A estrutura está fácil de seguir? Há trechos redundantes ou confusos? Há seções sem título, tópicos muito longos ou misturas de assuntos que dificultam chunking?
 2.  **Lacunas de contexto**: O texto pressupõe conhecimentos não explicados? Quais termos/jargões deveriam ser definidos? Há partes que precisam de exemplos, fluxogramas ou explicações adicionais para fazer sentido isoladamente?
-3.  **Metadados sugeridos**: Liste tags/atributos que devem acompanhar cada seção quando for indexado (ex.: fluxo, papel, sistema, status, responsável).
+3.  **Metadados sugeridos**: Baseando-se principalmente nas palavras-chave fornecidas e no conteúdo geral, liste tags/atributos que devem acompanhar o documento quando for indexado (ex.: fluxo, papel, sistema, status, responsável).
 4.  **Sensibilidade / higiene de dados**: Aponte trechos com dados sensíveis, credenciais, nomes que devem ser omitidos ou mascarados na ingestão.
 5.  **Melhorias recomendadas**: Crie uma lista de sugestões práticas de reescrita, reorganização ou detalhamento que tornem o documento mais amigável para leitores e para RAG. Para cada sugestão, identifique o trecho original, o problema e a sugestão de melhoria.
 6.  **Avaliação final**: Classifique a prontidão para ingestão (ex.: pronto, precisa de ajustes moderados, precisa de revisão profunda) e explique o motivo.
@@ -62,9 +66,9 @@ ${documentText}
 --- FIM DO CONTEÚDO ---
 `;
 
-export const analyzeDocument = async (documentText: string): Promise<AnalysisResult> => {
+export const analyzeDocument = async (documentText: string, keywords: string[]): Promise<AnalysisResult> => {
   try {
-    const prompt = getPrompt(documentText);
+    const prompt = getPrompt(documentText, keywords);
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: prompt,

@@ -1,13 +1,15 @@
-
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { AnalysisResult, SuggestionWithStatus, KanbanStatus } from '../types';
 import { KanbanColumn } from './KanbanColumn';
+import { simulateChunking } from '../utils/chunking';
 
 interface AnalysisDisplayProps {
   result: AnalysisResult;
   suggestions: SuggestionWithStatus[];
   onMoveSuggestion: (id: string, newStatus: KanbanStatus) => void;
   onReset: () => void;
+  documentText: string;
+  keywords: string[];
 }
 
 const InfoCard: React.FC<{ title: string; children: React.ReactNode; icon: JSX.Element }> = ({ title, children, icon }) => (
@@ -32,7 +34,52 @@ const ReadinessBadge: React.FC<{ readiness: string }> = ({ readiness }) => {
     return <span className={`px-4 py-2 rounded-full font-semibold border ${colorClasses}`}>{readiness}</span>;
 }
 
-export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({ result, suggestions, onMoveSuggestion, onReset }) => {
+const RagPreviewView: React.FC<{ documentText: string }> = ({ documentText }) => {
+    const chunks = useMemo(() => simulateChunking(documentText), [documentText]);
+
+    return (
+        <div className="bg-slate-800/50 p-6 rounded-lg border border-slate-700">
+            <h2 className="text-2xl font-bold text-slate-100 mb-4">
+                Pré-visualização de Chunking
+            </h2>
+            <p className="text-slate-400 mb-6">
+                O documento foi dividido em <span className="font-bold text-sky-400">{chunks.length}</span> chunks (fatias) para o sistema RAG.
+            </p>
+            <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-4">
+                {chunks.map((chunk, index) => (
+                    <div key={index} className="bg-slate-800 p-4 rounded-lg border border-slate-600 shadow">
+                        <p className="text-sm font-semibold text-sky-400 mb-2">CHUNK #{index + 1}</p>
+                        <p className="text-slate-300 whitespace-pre-wrap">{chunk}</p>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
+const KeywordsDisplay: React.FC<{ keywords: string[] }> = ({ keywords }) => (
+    <div className="bg-slate-800 p-6 rounded-lg shadow-lg border border-slate-700">
+        <div className="flex items-center mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" /></svg>
+            <h3 className="text-xl font-bold text-slate-200 ml-3">Principais Palavras-Chave Detectadas</h3>
+        </div>
+        <div className="flex flex-wrap gap-2">
+            {keywords.map((keyword, index) => (
+                <span key={index} className="bg-teal-900/50 text-teal-300 text-sm font-medium px-3 py-1 rounded-full border border-teal-700">
+                    {keyword}
+                </span>
+            ))}
+        </div>
+        <p className="text-sm text-slate-500 mt-4">
+            Estas são as palavras mais frequentes no seu documento. A IA as utilizou como base para sugerir os metadados.
+        </p>
+    </div>
+);
+
+
+export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({ result, suggestions, onMoveSuggestion, onReset, documentText, keywords }) => {
+  const [activeTab, setActiveTab] = useState<'audit' | 'rag'>('audit');
+
   const todoSuggestions = suggestions.filter(s => s.status === KanbanStatus.TODO);
   const adoptedSuggestions = suggestions.filter(s => s.status === KanbanStatus.ADOPTED);
   const dismissedSuggestions = suggestions.filter(s => s.status === KanbanStatus.DISMISSED);
@@ -48,10 +95,30 @@ export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({ result, sugges
     DISMISSED: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
   };
 
+  const TabButton: React.FC<{
+      label: string;
+      isActive: boolean;
+      onClick: () => void;
+  }> = ({ label, isActive, onClick }) => {
+    const activeClasses = 'border-sky-400 text-sky-300';
+    const inactiveClasses = 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-500';
+    return (
+        <button
+            onClick={onClick}
+            className={`px-4 py-3 text-lg font-semibold border-b-2 transition-colors duration-200 ${isActive ? activeClasses : inactiveClasses}`}
+        >
+            {label}
+        </button>
+    );
+  };
+
   return (
     <div className="container mx-auto p-4 md:p-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-4xl font-bold text-slate-100">Relatório de Auditoria RAG</h1>
+      <div className="flex justify-between items-start mb-6">
+        <div>
+            <h1 className="text-4xl font-bold text-slate-100">Resultado da Análise</h1>
+            <p className="text-slate-400 mt-1">Navegue pelas abas para ver o relatório completo e a pré-visualização RAG.</p>
+        </div>
         <button
             onClick={onReset}
             className="bg-sky-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-sky-700 transition-colors"
@@ -60,31 +127,51 @@ export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({ result, sugges
         </button>
       </div>
 
-      <div className="bg-slate-800 p-8 rounded-lg shadow-2xl mb-10 border border-slate-700">
-        <div className="flex items-center mb-4">
-            {ICONS.EVALUATION}
-            <h2 className="text-2xl font-bold text-slate-100 ml-3">Avaliação Final</h2>
-        </div>
-        <div className="flex flex-col md:flex-row md:items-center md:space-x-6">
-            <ReadinessBadge readiness={result.finalEvaluation.readiness} />
-            <p className="text-slate-300 mt-4 md:mt-0">{result.finalEvaluation.reason}</p>
-        </div>
+      <div className="mb-8 border-b border-slate-700">
+        <nav className="flex space-x-2">
+            <TabButton label="Relatório de Auditoria" isActive={activeTab === 'audit'} onClick={() => setActiveTab('audit')} />
+            <TabButton label="Pré-visualização RAG" isActive={activeTab === 'rag'} onClick={() => setActiveTab('rag')} />
+        </nav>
       </div>
       
-      <h2 className="text-3xl font-bold text-slate-100 mb-6">Resumo da Análise</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-        <InfoCard title="Diagnóstico de Clareza" icon={ICONS.CLARITY}>{result.clarityDiagnosis}</InfoCard>
-        <InfoCard title="Lacunas de Contexto" icon={ICONS.CONTEXT}>{result.contextGaps}</InfoCard>
-        <InfoCard title="Metadados Sugeridos" icon={ICONS.METADATA}>{result.suggestedMetadata}</InfoCard>
-        <InfoCard title="Sensibilidade de Dados" icon={ICONS.SENSITIVITY}>{result.dataSensitivity}</InfoCard>
-      </div>
+      {activeTab === 'audit' && (
+        <div>
+          <div className="bg-slate-800 p-8 rounded-lg shadow-2xl mb-10 border border-slate-700">
+            <div className="flex items-center mb-4">
+                {ICONS.EVALUATION}
+                <h2 className="text-2xl font-bold text-slate-100 ml-3">Avaliação Final</h2>
+            </div>
+            <div className="flex flex-col md:flex-row md:items-center md:space-x-6">
+                <ReadinessBadge readiness={result.finalEvaluation.readiness} />
+                <p className="text-slate-300 mt-4 md:mt-0">{result.finalEvaluation.reason}</p>
+            </div>
+          </div>
+          
+          <h2 className="text-3xl font-bold text-slate-100 mb-6">Resumo da Análise</h2>
+          
+          <div className="mb-6">
+            <KeywordsDisplay keywords={keywords} />
+          </div>
 
-      <h2 className="text-3xl font-bold text-slate-100 mb-6">Sugestões de Melhoria</h2>
-      <div className="flex flex-col lg:flex-row gap-6">
-        <KanbanColumn title="Para Revisar" status={KanbanStatus.TODO} suggestions={todoSuggestions} onMove={onMoveSuggestion} icon={ICONS.TODO} color="border-slate-400" />
-        <KanbanColumn title="Adotadas" status={KanbanStatus.ADOPTED} suggestions={adoptedSuggestions} onMove={onMoveSuggestion} icon={ICONS.ADOPTED} color="border-green-400" />
-        <KanbanColumn title="Dispensadas" status={KanbanStatus.DISMISSED} suggestions={dismissedSuggestions} onMove={onMoveSuggestion} icon={ICONS.DISMISSED} color="border-red-400" />
-      </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+            <InfoCard title="Diagnóstico de Clareza" icon={ICONS.CLARITY}>{result.clarityDiagnosis}</InfoCard>
+            <InfoCard title="Lacunas de Contexto" icon={ICONS.CONTEXT}>{result.contextGaps}</InfoCard>
+            <InfoCard title="Metadados Sugeridos" icon={ICONS.METADATA}>{result.suggestedMetadata}</InfoCard>
+            <InfoCard title="Sensibilidade de Dados" icon={ICONS.SENSITIVITY}>{result.dataSensitivity}</InfoCard>
+          </div>
+
+          <h2 className="text-3xl font-bold text-slate-100 mb-6">Sugestões de Melhoria</h2>
+          <div className="flex flex-col lg:flex-row gap-6">
+            <KanbanColumn title="Para Revisar" status={KanbanStatus.TODO} suggestions={todoSuggestions} onMove={onMoveSuggestion} icon={ICONS.TODO} color="border-slate-400" />
+            <KanbanColumn title="Adotadas" status={KanbanStatus.ADOPTED} suggestions={adoptedSuggestions} onMove={onMoveSuggestion} icon={ICONS.ADOPTED} color="border-green-400" />
+            <KanbanColumn title="Dispensadas" status={KanbanStatus.DISMISSED} suggestions={dismissedSuggestions} onMove={onMoveSuggestion} icon={ICONS.DISMISSED} color="border-red-400" />
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'rag' && (
+        <RagPreviewView documentText={documentText} />
+      )}
     </div>
   );
 };

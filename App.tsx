@@ -4,6 +4,7 @@ import { AnalysisResult, SuggestionWithStatus, KanbanStatus } from './types';
 import { FileUpload } from './components/FileUpload';
 import { Loader } from './components/Loader';
 import { AnalysisDisplay } from './components/AnalysisDisplay';
+import { getTermFrequency } from './utils/textUtils';
 
 // Declare global variables for libraries loaded via <script> tags
 declare var mammoth: any;
@@ -15,6 +16,8 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [suggestions, setSuggestions] = useState<SuggestionWithStatus[]>([]);
+  const [documentText, setDocumentText] = useState<string>('');
+  const [keywords, setKeywords] = useState<string[]>([]);
 
   // Configure PDF.js worker on component mount
   useEffect(() => {
@@ -28,6 +31,8 @@ const App: React.FC = () => {
     setAnalysisResult(null);
     setError(null);
     setSuggestions([]);
+    setDocumentText('');
+    setKeywords([]);
   }, []);
 
   const extractTextFromFile = async (fileToProcess: File): Promise<string> => {
@@ -87,13 +92,18 @@ const App: React.FC = () => {
 
     try {
       const textContent = await extractTextFromFile(file);
+      setDocumentText(textContent); // Store original text
+
       if (!textContent) {
         setError("Não foi possível extrair conteúdo do arquivo. O arquivo pode estar vazio ou corrompido.");
         setIsLoading(false);
         return;
       }
       
-      const result = await analyzeDocument(textContent);
+      const frequentTerms = getTermFrequency(textContent);
+      setKeywords(frequentTerms);
+
+      const result = await analyzeDocument(textContent, frequentTerms);
       setAnalysisResult(result);
       const initialSuggestions = result.recommendedImprovements.map(s => ({ ...s, status: KanbanStatus.TODO }));
       setSuggestions(initialSuggestions);
@@ -120,6 +130,8 @@ const App: React.FC = () => {
     setError(null);
     setSuggestions([]);
     setIsLoading(false);
+    setDocumentText('');
+    setKeywords([]);
   }, []);
 
   const renderContent = () => {
@@ -128,7 +140,7 @@ const App: React.FC = () => {
     }
 
     if (analysisResult) {
-      return <AnalysisDisplay result={analysisResult} suggestions={suggestions} onMoveSuggestion={handleMoveSuggestion} onReset={handleReset} />;
+      return <AnalysisDisplay result={analysisResult} suggestions={suggestions} onMoveSuggestion={handleMoveSuggestion} onReset={handleReset} documentText={documentText} keywords={keywords} />;
     }
 
     return (
