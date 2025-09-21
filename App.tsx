@@ -4,6 +4,7 @@ import { AnalysisResult, SuggestionWithStatus, KanbanStatus } from './types';
 import { FileUpload } from './components/FileUpload';
 import { Loader } from './components/Loader';
 import { AnalysisDisplay } from './components/AnalysisDisplay';
+import { InfoModal } from './components/InfoModal';
 import { getTermFrequency } from './utils/textUtils';
 
 // Declare global variables for libraries loaded via <script> tags
@@ -18,6 +19,7 @@ const App: React.FC = () => {
   const [suggestions, setSuggestions] = useState<SuggestionWithStatus[]>([]);
   const [documentText, setDocumentText] = useState<string>('');
   const [keywords, setKeywords] = useState<string[]>([]);
+  const [isInfoModalOpen, setIsInfoModalOpen] = useState<boolean>(false);
 
   // Configure PDF.js worker on component mount
   useEffect(() => {
@@ -145,6 +147,16 @@ const App: React.FC = () => {
 
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
+        <button 
+          onClick={() => setIsInfoModalOpen(true)}
+          className="absolute top-4 right-4 z-10 w-12 h-12 flex items-center justify-center bg-slate-700/50 rounded-full text-sky-400 hover:bg-slate-600/70 hover:text-sky-300 transition-all duration-300"
+          aria-label="Sobre o aplicativo"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </button>
+
         <header className="text-center mb-10">
           <h1 className="text-5xl font-extrabold text-slate-100 mb-2">Auditor de Documentos para RAG</h1>
           <p className="text-lg text-slate-400 max-w-3xl">
@@ -180,7 +192,12 @@ const App: React.FC = () => {
     );
   };
 
-  return <main>{renderContent()}</main>;
+  return (
+    <main>
+      {renderContent()}
+      <InfoModal isOpen={isInfoModalOpen} onClose={() => setIsInfoModalOpen(false)} />
+    </main>
+  );
 };
 
 export default App;
