@@ -12,7 +12,8 @@ interface AnalysisDisplayProps {
   keywords: string[];
 }
 
-const InfoCard: React.FC<{ title: string; children: React.ReactNode; icon: JSX.Element }> = ({ title, children, icon }) => (
+// FIX: Explicitly use React.JSX.Element to resolve "Cannot find namespace 'JSX'" error.
+const InfoCard: React.FC<{ title: string; children: React.ReactNode; icon: React.JSX.Element }> = ({ title, children, icon }) => (
     <div className="bg-slate-800 p-6 rounded-lg shadow-lg border border-slate-700">
         <div className="flex items-center mb-3">
             {icon}
@@ -22,17 +23,31 @@ const InfoCard: React.FC<{ title: string; children: React.ReactNode; icon: JSX.E
     </div>
 );
 
-const ReadinessBadge: React.FC<{ readiness: string }> = ({ readiness }) => {
+const ReadinessCircle: React.FC<{ readiness: string }> = ({ readiness }) => {
     let colorClasses = '';
-    if (readiness.includes('Ready')) {
-        colorClasses = 'bg-green-500/20 text-green-300 border-green-500';
-    } else if (readiness.includes('Moderate')) {
-        colorClasses = 'bg-yellow-500/20 text-yellow-300 border-yellow-500';
+    let text = '';
+
+    if (readiness.includes('Pronto')) {
+        colorClasses = 'border-green-500 text-green-300';
+        text = 'Pronto para Ingestão';
+    } else if (readiness.includes('Moderados')) {
+        colorClasses = 'border-yellow-500 text-yellow-300';
+        text = 'Ajustes Moderados';
     } else {
-        colorClasses = 'bg-red-500/20 text-red-300 border-red-500';
+        colorClasses = 'border-red-500 text-red-300';
+        text = 'Revisão Profunda';
     }
-    return <span className={`px-4 py-2 rounded-full font-semibold border ${colorClasses}`}>{readiness}</span>;
-}
+
+    const words = text.split(' ');
+
+    return (
+        <div className={`flex-shrink-0 w-36 h-36 rounded-full border-2 ${colorClasses} flex items-center justify-center text-center p-2 bg-slate-900/50`}>
+            <span className="font-semibold text-lg">
+                {words.map((word, i) => <React.Fragment key={i}>{word}{i < words.length - 1 && <br />}</React.Fragment>)}
+            </span>
+        </div>
+    );
+};
 
 const RagPreviewView: React.FC<{ documentText: string }> = ({ documentText }) => {
     const chunks = useMemo(() => simulateChunking(documentText), [documentText]);
@@ -137,13 +152,13 @@ export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({ result, sugges
       {activeTab === 'audit' && (
         <div>
           <div className="bg-slate-800 p-8 rounded-lg shadow-2xl mb-10 border border-slate-700">
-            <div className="flex items-center mb-4">
+            <div className="flex items-center mb-6">
                 {ICONS.EVALUATION}
                 <h2 className="text-2xl font-bold text-slate-100 ml-3">Avaliação Final</h2>
             </div>
-            <div className="flex flex-col md:flex-row md:items-center md:space-x-6">
-                <ReadinessBadge readiness={result.finalEvaluation.readiness} />
-                <p className="text-slate-300 mt-4 md:mt-0">{result.finalEvaluation.reason}</p>
+            <div className="flex flex-col md:flex-row items-center gap-8">
+                <ReadinessCircle readiness={result.finalEvaluation.readiness} />
+                <p className="text-slate-300 text-base leading-relaxed">{result.finalEvaluation.reason}</p>
             </div>
           </div>
           

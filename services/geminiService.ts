@@ -2,7 +2,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { AnalysisResult } from '../types';
 
 if (!process.env.API_KEY) {
-  throw new Error("API_KEY environment variable is not set.");
+  throw new Error("A variável de ambiente API_KEY não está definida.");
 }
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -10,20 +10,20 @@ const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 const analysisSchema = {
   type: Type.OBJECT,
   properties: {
-    clarityDiagnosis: { type: Type.STRING, description: "Detailed diagnosis of clarity issues. Mention specific sections and explain why they are problematic. Format as a bulleted list within a single string." },
-    contextGaps: { type: Type.STRING, description: "Analysis of context gaps and unexplained jargon. Format as a bulleted list within a single string." },
-    suggestedMetadata: { type: Type.STRING, description: "A comma-separated list of suggested metadata tags or attributes." },
-    dataSensitivity: { type: Type.STRING, description: "Report on any sensitive data found, like credentials or personal names. Format as a bulleted list within a single string." },
+    clarityDiagnosis: { type: Type.STRING, description: "Diagnóstico detalhado de problemas de clareza. Mencione seções específicas e explique por que são problemáticas. Formate como uma lista com marcadores dentro de uma única string." },
+    contextGaps: { type: Type.STRING, description: "Análise de lacunas de contexto e jargões não explicados. Formate como uma lista com marcadores dentro de uma única string." },
+    suggestedMetadata: { type: Type.STRING, description: "Uma lista de tags ou atributos de metadados sugeridos, separados por vírgula." },
+    dataSensitivity: { type: Type.STRING, description: "Relatório sobre quaisquer dados sensíveis encontrados, como credenciais ou nomes pessoais. Formate como uma lista com marcadores dentro de uma única string." },
     recommendedImprovements: {
       type: Type.ARRAY,
-      description: "A list of specific, actionable improvement suggestions.",
+      description: "Uma lista de sugestões de melhoria específicas e acionáveis.",
       items: {
         type: Type.OBJECT,
         properties: {
-          category: { type: Type.STRING, description: "The category of the issue (e.g., 'Clarity', 'Context', 'Reorganization', 'Formatting')." },
-          originalSnippet: { type: Type.STRING, description: "The exact text snippet from the document that needs improvement. Keep it brief (1-2 sentences)." },
-          issue: { type: Type.STRING, description: "A concise description of the problem with the snippet." },
-          suggestion: { type: Type.STRING, description: "The AI's rewritten or improved version of the snippet or a clear instruction for improvement." }
+          category: { type: Type.STRING, description: "A categoria do problema (ex: 'Clareza', 'Contexto', 'Reorganização', 'Formatação')." },
+          originalSnippet: { type: Type.STRING, description: "O trecho de texto exato do documento que precisa de melhoria. Mantenha-o breve (1-2 frases)." },
+          issue: { type: Type.STRING, description: "Uma descrição concisa do problema com o trecho." },
+          suggestion: { type: Type.STRING, description: "A versão reescrita ou melhorada do trecho pela IA ou uma instrução clara para melhoria." }
         },
         required: ["category", "issue", "suggestion", "originalSnippet"],
       }
@@ -31,8 +31,8 @@ const analysisSchema = {
     finalEvaluation: {
       type: Type.OBJECT,
       properties: {
-        readiness: { type: Type.STRING, description: "Final readiness classification: 'Ready for Ingestion', 'Needs Moderate Adjustments', or 'Needs Deep Revision'." },
-        reason: { type: Type.STRING, description: "The reasoning behind the final readiness classification." }
+        readiness: { type: Type.STRING, description: "Classificação final de prontidão: 'Pronto para Ingestão', 'Necessita de Ajustes Moderados', ou 'Necessita de Revisão Profunda'." },
+        reason: { type: Type.STRING, description: "A justificativa por trás da classificação final de prontidão." }
       },
        required: ["readiness", "reason"],
     }
@@ -90,10 +90,10 @@ export const analyzeDocument = async (documentText: string, keywords: string[]):
     return { ...result, recommendedImprovements: improvementsWithIds };
 
   } catch (error) {
-    console.error("Error analyzing document:", error);
+    console.error("Erro ao analisar o documento:", error);
     if (error instanceof Error) {
-        throw new Error(`Failed to analyze document with Gemini API: ${error.message}`);
+        throw new Error(`Falha ao analisar o documento com a API Gemini: ${error.message}`);
     }
-    throw new Error("An unknown error occurred during document analysis.");
+    throw new Error("Ocorreu um erro desconhecido durante a análise do documento.");
   }
 };

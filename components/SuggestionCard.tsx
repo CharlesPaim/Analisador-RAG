@@ -10,10 +10,10 @@ interface SuggestionCardProps {
 
 const CategoryBadge: React.FC<{ category: string }> = ({ category }) => {
     const colors: { [key: string]: string } = {
-        'Clarity': 'bg-blue-900 text-blue-300',
-        'Context': 'bg-purple-900 text-purple-300',
-        'Reorganization': 'bg-green-900 text-green-300',
-        'Formatting': 'bg-yellow-900 text-yellow-300',
+        'Clareza': 'bg-blue-900 text-blue-300',
+        'Contexto': 'bg-purple-900 text-purple-300',
+        'Reorganização': 'bg-green-900 text-green-300',
+        'Formatação': 'bg-yellow-900 text-yellow-300',
         'default': 'bg-slate-700 text-slate-300'
     };
     const colorClass = colors[category] || colors['default'];

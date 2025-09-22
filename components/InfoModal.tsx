@@ -5,7 +5,8 @@ interface InfoModalProps {
   onClose: () => void;
 }
 
-const InfoSection: React.FC<{ title: string; icon: JSX.Element; children: React.ReactNode }> = ({ title, icon, children }) => (
+// FIX: Explicitly use React.JSX.Element to resolve "Cannot find namespace 'JSX'" error.
+const InfoSection: React.FC<{ title: string; icon: React.JSX.Element; children: React.ReactNode }> = ({ title, icon, children }) => (
   <div className="mb-6">
     <div className="flex items-center mb-2">
       {icon}

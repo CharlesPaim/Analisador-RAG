@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { SuggestionCard } from './SuggestionCard';
 import { SuggestionWithStatus, KanbanStatus } from '../types';
@@ -8,7 +7,8 @@ interface KanbanColumnProps {
   status: KanbanStatus;
   suggestions: SuggestionWithStatus[];
   onMove: (id: string, newStatus: KanbanStatus) => void;
-  icon: JSX.Element;
+  // FIX: Explicitly use React.JSX.Element to resolve "Cannot find namespace 'JSX'" error.
+  icon: React.JSX.Element;
   color: string;
 }
 
