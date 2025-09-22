@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Suggestion, KanbanStatus } from '../types';
 
@@ -35,20 +34,20 @@ export const SuggestionCard: React.FC<SuggestionCardProps> = ({ suggestion, onMo
         
         <div className="mb-3">
           <h4 className="font-semibold text-sm text-slate-400 mb-1">Trecho Original</h4>
-          <blockquote className="border-l-2 border-slate-600 pl-3 text-sm text-slate-300 italic">
+          <blockquote className="border-l-2 border-slate-600 pl-3 text-sm text-slate-300 italic break-words">
             "{suggestion.originalSnippet}"
           </blockquote>
         </div>
 
         <div className="mb-3">
           <h4 className="font-semibold text-sm text-slate-400 mb-1">Problema Identificado</h4>
-          <p className="text-sm text-slate-300">{suggestion.issue}</p>
+          <p className="text-sm text-slate-300 break-words">{suggestion.issue}</p>
         </div>
 
         <div className="mb-4">
           <h4 className="font-semibold text-sm text-slate-400 mb-1">Sugestão da IA</h4>
           <div className="bg-slate-900 p-3 rounded-md">
-            <p className="text-sm text-sky-300 font-mono">{suggestion.suggestion}</p>
+            <p className="text-sm text-sky-300 font-mono break-words">{suggestion.suggestion}</p>
           </div>
         </div>
       </div>
