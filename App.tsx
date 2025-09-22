@@ -142,7 +142,7 @@ const App: React.FC = () => {
     }
 
     if (analysisResult) {
-      return <AnalysisDisplay result={analysisResult} suggestions={suggestions} onMoveSuggestion={handleMoveSuggestion} onReset={handleReset} documentText={documentText} keywords={keywords} />;
+      return <AnalysisDisplay result={analysisResult} suggestions={suggestions} onMoveSuggestion={handleMoveSuggestion} onReset={handleReset} documentText={documentText} keywords={keywords} fileName={file?.name} />;
     }
 
     return (

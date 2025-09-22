@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { AnalysisResult, SuggestionWithStatus, KanbanStatus } from '../types';
 import { KanbanColumn } from './KanbanColumn';
 import { simulateChunking } from '../utils/chunking';
+import { exportAnalysisToHTML } from '../utils/exportUtils';
 
 interface AnalysisDisplayProps {
   result: AnalysisResult;
@@ -10,6 +11,7 @@ interface AnalysisDisplayProps {
   onReset: () => void;
   documentText: string;
   keywords: string[];
+  fileName?: string;
 }
 
 // FIX: Explicitly use React.JSX.Element to resolve "Cannot find namespace 'JSX'" error.
@@ -92,13 +94,20 @@ const KeywordsDisplay: React.FC<{ keywords: string[] }> = ({ keywords }) => (
 );
 
 
-export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({ result, suggestions, onMoveSuggestion, onReset, documentText, keywords }) => {
+export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({ result, suggestions, onMoveSuggestion, onReset, documentText, keywords, fileName }) => {
   const [activeTab, setActiveTab] = useState<'audit' | 'rag'>('audit');
 
   const todoSuggestions = suggestions.filter(s => s.status === KanbanStatus.TODO);
   const adoptedSuggestions = suggestions.filter(s => s.status === KanbanStatus.ADOPTED);
   const dismissedSuggestions = suggestions.filter(s => s.status === KanbanStatus.DISMISSED);
   
+  const handleExport = () => {
+    if (!result) return;
+    const baseName = fileName ? fileName.split('.').slice(0, -1).join('.') || fileName : 'documento';
+    const exportFileName = `analise-${baseName}.html`;
+    exportAnalysisToHTML(result, suggestions, keywords, exportFileName);
+  };
+
   const ICONS = {
     EVALUATION: <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
     CLARITY: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>,
@@ -134,12 +143,20 @@ export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({ result, sugges
             <h1 className="text-4xl font-bold text-slate-100">Resultado da Análise</h1>
             <p className="text-slate-400 mt-1">Navegue pelas abas para ver o relatório completo e a pré-visualização RAG.</p>
         </div>
-        <button
-            onClick={onReset}
-            className="bg-sky-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-sky-700 transition-colors"
-        >
-            Analisar Outro
-        </button>
+        <div className="flex space-x-2">
+            <button
+                onClick={handleExport}
+                className="bg-teal-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-teal-700 transition-colors"
+            >
+                Exportar para HTML
+            </button>
+            <button
+                onClick={onReset}
+                className="bg-sky-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-sky-700 transition-colors"
+            >
+                Analisar Outro
+            </button>
+        </div>
       </div>
 
       <div className="mb-8 border-b border-slate-700">
