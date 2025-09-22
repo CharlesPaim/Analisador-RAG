@@ -1,10 +1,16 @@
 
+export interface GlossarySuggestion {
+  term: string;
+  suggestedDefinition: string;
+}
+
 export interface Suggestion {
   id: string;
   category: string;
   originalSnippet: string;
   issue: string;
-  suggestion: string;
+  suggestionSummary: string;
+  rewrittenText: string;
 }
 
 export interface FinalEvaluation {
@@ -17,6 +23,7 @@ export interface AnalysisResult {
   contextGaps: string;
   suggestedMetadata: string;
   dataSensitivity: string;
+  glossarySuggestions: GlossarySuggestion[];
   recommendedImprovements: Suggestion[];
   finalEvaluation: FinalEvaluation;
 }

@@ -26,7 +26,7 @@ const CategoryBadge: React.FC<{ category: string }> = ({ category }) => {
 
 export const SuggestionCard: React.FC<SuggestionCardProps> = ({ suggestion, onMove, currentStatus }) => {
   return (
-    <div className="bg-slate-800 rounded-lg shadow-lg p-4 mb-4 border border-slate-700 flex flex-col justify-between h-full">
+    <div className="bg-slate-800 rounded-lg shadow-lg p-4 mb-4 border border-slate-700 flex flex-col justify-between">
       <div>
         <div className="mb-3">
             <CategoryBadge category={suggestion.category} />
@@ -44,10 +44,15 @@ export const SuggestionCard: React.FC<SuggestionCardProps> = ({ suggestion, onMo
           <p className="text-sm text-slate-300 break-words">{suggestion.issue}</p>
         </div>
 
+        <div className="mb-3">
+          <h4 className="font-semibold text-sm text-slate-400 mb-1">Sugestão de Melhoria</h4>
+          <p className="text-sm text-slate-300 break-words">{suggestion.suggestionSummary}</p>
+        </div>
+
         <div className="mb-4">
-          <h4 className="font-semibold text-sm text-slate-400 mb-1">Sugestão da IA</h4>
+          <h4 className="font-semibold text-sm text-slate-400 mb-1">Texto Reescrito Sugerido</h4>
           <div className="bg-slate-900 p-3 rounded-md">
-            <p className="text-sm text-sky-300 font-mono break-words">{suggestion.suggestion}</p>
+            <p className="text-sm text-sky-300 font-mono break-words whitespace-pre-wrap">{suggestion.rewrittenText}</p>
           </div>
         </div>
       </div>

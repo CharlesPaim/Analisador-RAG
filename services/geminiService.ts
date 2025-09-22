@@ -14,6 +14,18 @@ const analysisSchema = {
     contextGaps: { type: Type.STRING, description: "Análise de lacunas de contexto e jargões não explicados. Formate como uma lista com marcadores dentro de uma única string." },
     suggestedMetadata: { type: Type.STRING, description: "Uma lista de tags ou atributos de metadados sugeridos, separados por vírgula." },
     dataSensitivity: { type: Type.STRING, description: "Relatório sobre quaisquer dados sensíveis encontrados, como credenciais ou nomes pessoais. Formate como uma lista com marcadores dentro de uma única string." },
+    glossarySuggestions: {
+      type: Type.ARRAY,
+      description: "Uma lista de termos técnicos, jargões ou acrônimos que deveriam ser definidos em um glossário.",
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          term: { type: Type.STRING, description: "O termo ou jargão identificado." },
+          suggestedDefinition: { type: Type.STRING, description: "Uma sugestão de definição clara e concisa para o termo, baseada no contexto do documento." }
+        },
+        required: ["term", "suggestedDefinition"],
+      }
+    },
     recommendedImprovements: {
       type: Type.ARRAY,
       description: "Uma lista de sugestões de melhoria específicas e acionáveis.",
@@ -21,11 +33,12 @@ const analysisSchema = {
         type: Type.OBJECT,
         properties: {
           category: { type: Type.STRING, description: "A categoria do problema (ex: 'Clareza', 'Contexto', 'Reorganização', 'Formatação')." },
-          originalSnippet: { type: Type.STRING, description: "O trecho de texto exato do documento que precisa de melhoria. Mantenha-o breve (1-2 frases)." },
+          originalSnippet: { type: Type.STRING, description: "O parágrafo ou bloco de texto completo do documento original que precisa de melhoria." },
           issue: { type: Type.STRING, description: "Uma descrição concisa do problema com o trecho." },
-          suggestion: { type: Type.STRING, description: "A versão reescrita ou melhorada do trecho pela IA ou uma instrução clara para melhoria." }
+          suggestionSummary: { type: Type.STRING, description: "Uma instrução clara e resumida da melhoria a ser feita." },
+          rewrittenText: { type: Type.STRING, description: "A versão completa do trecho de texto já reescrito e melhorado pela IA, pronto para ser copiado." }
         },
-        required: ["category", "issue", "suggestion", "originalSnippet"],
+        required: ["category", "issue", "suggestionSummary", "rewrittenText", "originalSnippet"],
       }
     },
     finalEvaluation: {
@@ -37,29 +50,31 @@ const analysisSchema = {
        required: ["readiness", "reason"],
     }
   },
-  required: ["clarityDiagnosis", "contextGaps", "suggestedMetadata", "dataSensitivity", "recommendedImprovements", "finalEvaluation"],
+  required: ["clarityDiagnosis", "contextGaps", "suggestedMetadata", "dataSensitivity", "glossarySuggestions", "recommendedImprovements", "finalEvaluation"],
 };
 
 const getPrompt = (documentText: string, keywords: string[]): string => `
-Você agora é um auditor/editor técnico. Recebeu o documento abaixo, que hoje serve como referência para a equipe e também será transformado em fonte de conhecimento para um sistema RAG (indexação vetorial com consulta por IA).
+Você agora é um Engenheiro de Conhecimento especialista em otimização de documentos para sistemas RAG (Retrieval-Augmented Generation). Seu objetivo principal é analisar o documento e sugerir modificações que o transformem em uma base de conhecimento de alta qualidade, com informações atômicas, claras e autocontidas, ideais para chunking e busca vetorial.
 
 Uma análise preliminar do texto identificou as seguintes palavras-chave principais, baseadas na frequência:
 [${keywords.join(', ')}]
-
-Use esta lista de palavras-chave como inspiração principal para a seção "Metadados sugeridos".
+Use esta lista como inspiração para os metadados sugeridos.
 
 Quero que você faça uma análise completa e retorne o resultado em formato JSON, seguindo estritamente o schema fornecido.
 
 A análise deve conter:
 
-1.  **Diagnóstico de clareza**: A estrutura está fácil de seguir? Há trechos redundantes ou confusos? Há seções sem título, tópicos muito longos ou misturas de assuntos que dificultam chunking?
-2.  **Lacunas de contexto**: O texto pressupõe conhecimentos não explicados? Quais termos/jargões deveriam ser definidos? Há partes que precisam de exemplos, fluxogramas ou explicações adicionais para fazer sentido isoladamente?
-3.  **Metadados sugeridos**: Baseando-se principalmente nas palavras-chave fornecidas e no conteúdo geral, liste tags/atributos que devem acompanhar o documento quando for indexado (ex.: fluxo, papel, sistema, status, responsável).
-4.  **Sensibilidade / higiene de dados**: Aponte trechos com dados sensíveis, credenciais, nomes que devem ser omitidos ou mascarados na ingestão.
-5.  **Melhorias recomendadas**: Crie uma lista de sugestões práticas de reescrita, reorganização ou detalhamento que tornem o documento mais amigável para leitores e para RAG. Para cada sugestão, identifique o trecho original, o problema e a sugestão de melhoria.
-6.  **Avaliação final**: Classifique a prontidão para ingestão (ex.: pronto, precisa de ajustes moderados, precisa de revisão profunda) e explique o motivo.
-
-A seguir está o conteúdo a ser avaliado. Faça referência a trechos com identificadores (página, seção, título) sempre que possível para facilitar a revisão humana.
+1.  **Diagnóstico de clareza**: Avalie a estrutura, redundâncias e clareza geral.
+2.  **Lacunas de contexto**: Identifique conceitos que precisam de mais explicação.
+3.  **Metadados sugeridos**: Sugira tags baseadas no conteúdo e nas palavras-chave.
+4.  **Sensibilidade / higiene de dados**: Aponte quaisquer dados sensíveis.
+5.  **Sugestões para Glossário**: Crie uma lista de jargões e termos técnicos com sugestões de definição para uma tabela "De/Para".
+6.  **Melhorias recomendadas**: Para cada melhoria, forneça:
+    -   **originalSnippet**: Capture o parágrafo ou bloco lógico completo onde o problema foi encontrado.
+    -   **issue**: Descreva o problema.
+    -   **suggestionSummary**: Resuma a ação de melhoria.
+    -   **rewrittenText**: Forneça o texto completo já corrigido e formatado em Markdown, pronto para ser copiado.
+7.  **Avaliação final**: Classifique a prontidão do documento para ser usado em um RAG.
 
 --- CONTEÚDO DO DOCUMENTO ---
 ${documentText}
